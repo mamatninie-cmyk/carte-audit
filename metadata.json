@@ -1,0 +1,5 @@
+{
+  "name": "Analyse Couverture Audits France 2025",
+  "description": "Une application interactive de visualisation cartographique permettant d'analyser la couverture géographique des auditeurs par département français en 2025, basée sur les données d'intervention et de proximité.",
+  "requestFramePermissions": []
+}
