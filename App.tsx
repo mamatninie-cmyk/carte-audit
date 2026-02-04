@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import FranceMap from './components/FranceMap';
 import { calculateDepartmentStats } from './services/dataProcessor';
 import { CoverageLevel, DepartmentStats } from './types';
@@ -7,6 +7,14 @@ import { CoverageLevel, DepartmentStats } from './types';
 const App: React.FC = () => {
   const [isPresentationMode, setIsPresentationMode] = useState(false);
   
+  // Détection du mode PPT via l'URL au chargement
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'ppt' || params.get('presentation') === 'true') {
+      setIsPresentationMode(true);
+    }
+  }, []);
+
   const stats: Map<string, DepartmentStats> = useMemo(() => calculateDepartmentStats(), []);
 
   const aggregates = useMemo(() => {
@@ -24,8 +32,15 @@ const App: React.FC = () => {
     return counts;
   }, [stats]);
 
+  const copyPptLink = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('mode', 'ppt');
+    navigator.clipboard.writeText(url.toString());
+    alert("Lien copié ! Utilisez ce lien dans PowerPoint pour ouvrir la carte directement en mode plein écran.");
+  };
+
   return (
-    <div className={`min-h-screen bg-slate-50 flex flex-col ${isPresentationMode ? 'p-0' : ''}`}>
+    <div className={`min-h-screen bg-slate-50 flex flex-col ${isPresentationMode ? 'p-0 overflow-hidden' : ''}`}>
       {/* Header - Masqué en mode présentation */}
       {!isPresentationMode && (
         <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm">
@@ -38,16 +53,24 @@ const App: React.FC = () => {
               <p className="text-xs text-slate-500 font-medium">Analyse géographique des interventions</p>
             </div>
           </div>
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={copyPptLink}
+              className="flex items-center space-x-2 bg-white border border-slate-200 hover:bg-slate-50 transition-colors px-4 py-2 rounded-lg text-sm font-bold text-slate-600"
+              title="Copier le lien optimisé"
+            >
+              <i className="fa-solid fa-link"></i>
+              <span>Lien PPT</span>
+            </button>
              <button 
               onClick={() => setIsPresentationMode(true)}
-              className="flex items-center space-x-2 bg-slate-100 hover:bg-blue-600 hover:text-white transition-colors px-4 py-2 rounded-lg text-sm font-bold text-slate-600"
-              title="Optimiser pour PowerPoint"
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white transition-colors px-4 py-2 rounded-lg text-sm font-bold shadow-sm"
+              title="Passer en plein écran"
             >
               <i className="fa-solid fa-display"></i>
               <span>Mode Présentation</span>
             </button>
-            <div className="h-8 w-[1px] bg-slate-200"></div>
+            <div className="h-8 w-[1px] bg-slate-200 mx-2"></div>
             <div className="flex flex-col items-end">
               <span className="text-slate-400 font-semibold uppercase text-[10px]">Total Interventions</span>
               <span className="text-lg font-bold text-slate-800">
@@ -62,7 +85,7 @@ const App: React.FC = () => {
       {isPresentationMode && (
         <button 
           onClick={() => setIsPresentationMode(false)}
-          className="fixed bottom-4 right-4 z-[100] bg-white/90 backdrop-blur shadow-lg border border-slate-200 px-3 py-2 rounded-full text-slate-600 hover:text-blue-600 transition-all text-xs font-bold flex items-center gap-2"
+          className="fixed bottom-4 left-4 z-[100] bg-white/90 backdrop-blur shadow-lg border border-slate-200 px-3 py-2 rounded-full text-slate-600 hover:text-blue-600 transition-all text-xs font-bold flex items-center gap-2"
         >
           <i className="fa-solid fa-compress"></i>
           Quitter le plein écran
@@ -76,7 +99,7 @@ const App: React.FC = () => {
           <div className={`${isPresentationMode ? 'col-span-1' : 'lg:col-span-8'}`}>
             <div className="space-y-6">
               <section>
-                <FranceMap stats={stats} />
+                <FranceMap stats={stats} isPresentationMode={isPresentationMode} />
               </section>
 
               {!isPresentationMode && (
@@ -105,7 +128,7 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   {Array.from(stats.values())
                     .sort((a, b) => b.score - a.score)
-                    .slice(0, 6)
+                    .slice(0, 8)
                     .map((dept) => (
                       <div key={dept.id} className="flex items-center group">
                         <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs mr-3">
@@ -130,8 +153,8 @@ const App: React.FC = () => {
       </main>
 
       {!isPresentationMode && (
-        <footer className="bg-white border-t border-slate-200 px-6 py-4 text-center">
-          <p className="text-xs text-slate-400">Analyse Interactive Audit 2025 - Optimisé pour l'intégration web</p>
+        <footer className="bg-white border-t border-slate-200 px-6 py-4 text-center mt-auto">
+          <p className="text-xs text-slate-400 font-medium">Analyse Interactive de Couverture & Logistique Auditeurs 2025</p>
         </footer>
       )}
     </div>
